@@ -3,12 +3,92 @@
  */
 package org.example;
 
-public class App {
-    public String getGreeting() {
-        return "Hello World!";
-    }
+import org.example.Entities.User;
+import org.example.Services.UserBookingService;
+import org.example.util.UserServiceUtil;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Scanner;
+import java.util.UUID;
+
+public class App {
     public static void main(String[] args) {
-        System.out.println(new App().getGreeting());
-    }
+        System.out.println("IRCTC Running!!");
+        Scanner input=new Scanner(System.in);
+
+        int option=0;
+        UserBookingService userBookingService;
+        try {
+            userBookingService=new UserBookingService();
+        } catch (IOException e) {
+            System.out.println("There's a problem with your service");
+            return;
+        }
+
+        while (option!=7){
+            System.out.println("Choose option:");
+            System.out.println("1. Sign Up");
+            System.out.println("2. Login");
+            System.out.println("3. Fetch Bookings");
+            System.out.println("4. Search Train");
+            System.out.println("5. Book a Seat");
+            System.out.println("6. Cancel Booking");
+            System.out.println("7. Exit");
+
+            try {
+                option = Integer.parseInt(input.nextLine().trim());
+            } catch (NumberFormatException e) {
+                System.out.println("Please enter a number from 1 to 7.");
+                continue;
+            }
+            switch (option){
+                case 1:
+                    System.out.println("Enter your username to sign up:");
+                    String nameToSignUp = input.nextLine().trim();
+
+                    System.out.println("Enter your password:");
+                    String passwordToSignUp = input.nextLine();
+
+                    User userToSignUp = new User(nameToSignUp, passwordToSignUp,
+                            UserServiceUtil.hashPassword(passwordToSignUp),
+                            new ArrayList<>(), UUID.randomUUID().toString());
+
+                    System.out.println(userBookingService.signUp(userToSignUp)
+                            ? "Sign up successful."
+                            : "Sign up failed.");
+                    break;
+                case 2:
+                    System.out.println("Enter your username to login:");
+                    String nameToLogin = input.nextLine().trim();
+                    System.out.println("Enter your password:");
+                    String passwordToLogin = input.nextLine();
+
+                    User userToLogin = new User(nameToLogin, passwordToLogin, null,
+                            new ArrayList<>(), UUID.randomUUID().toString());
+                    try {
+                        UserBookingService loginService = new UserBookingService(userToLogin);
+                        if (loginService.loginUser()) {
+                            userBookingService = loginService;
+                            System.out.println("Login successful.");
+                        } else {
+                            System.out.println("Invalid username or password.");
+                        }
+                    }catch (IOException ex){
+                        System.out.println("Unable to log in: " + ex.getMessage());
+                    }
+                    break;
+                case 3:
+                    System.out.println("Fetching Bookings");
+                    userBookingService.fetchBooking();
+                    break;
+                case 7:
+                    System.out.println("Goodbye!");
+                    break;
+                default:
+                    System.out.println("That option is not available yet.");
+                    break;
+                }
+            }
 }
+        }
